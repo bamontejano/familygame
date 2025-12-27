@@ -15,8 +15,8 @@ import {
   InsertFamilyRelation,
   invitationCodes,
   InsertInvitationCode,
-} from "../drizzle/schema";
-import { ENV } from "./_core/env";
+} from "../drizzle/schema.js";
+import { ENV } from "./_core/env.js";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -269,9 +269,6 @@ export async function getPendingRedeemedRewardsByChildren(childIds: number[]) {
   const db = await getDb();
   if (!db) return [];
   
-  // Usamos una consulta manual o inArray si está disponible, 
-  // para simplificar buscaremos todas y filtraremos o haremos múltiples consultas si es necesario.
-  // Pero drizzle soporta inArray.
   return db
     .select({
       id: redeemedRewards.id,

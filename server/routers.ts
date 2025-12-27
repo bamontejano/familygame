@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { COOKIE_NAME } from "../shared/const.js";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
-import * as db from "./db";
+import { COOKIE_NAME, ONE_YEAR_MS } from "../shared/const.js";
+import { getSessionCookieOptions } from "./_core/cookies.js";
+import { systemRouter } from "./_core/systemRouter.js";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc.js";
+import { sdk } from "./_core/sdk.js";
+import * as db from "./db.js";
 
 export const appRouter = router({
   system: systemRouter,
@@ -233,8 +234,6 @@ export const appRouter = router({
         const balance = await db.getUserCoinBalance(ctx.user.id);
         if (balance < reward.costCoins) throw new Error("Monedas insuficientes");
 
-        // Creamos la solicitud de canje con estado 'pending'
-        // No creamos la transacción de monedas todavía
         await db.createRedeemedReward({
           childId: ctx.user.id,
           rewardId: input.rewardId,
@@ -251,10 +250,8 @@ export const appRouter = router({
         const reward = await db.getRewardById(redemption.rewardId);
         if (!reward) throw new Error("Recompensa no encontrada");
         
-        // Verificar que el usuario actual es el padre de la recompensa
         if (reward.parentId !== ctx.user.id) throw new Error("No autorizado");
 
-        // 1. Crear la transacción de monedas (descuento)
         await db.createCoinTransaction({
           userId: redemption.childId,
           amount: -redemption.costCoins,
@@ -263,7 +260,6 @@ export const appRouter = router({
           description: `Canjeado: ${reward.title}`,
         });
 
-        // 2. Actualizar el estado de la solicitud
         await db.updateRedeemedReward(input.redemptionId, {
           status: "approved",
           processedAt: new Date(),
