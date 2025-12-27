@@ -52,7 +52,7 @@ export function getApiBaseUrl(): string {
   // 3. Entorno Nativo (Android/iOS): 
   // Esta es la URL definitiva de tu servidor en Vercel.
   // Reemplázala por la URL que te asigne Vercel al desplegar (ej: https://family-game.vercel.app)
-  return "https://family-game-server.vercel.app"; 
+  return "https://familygame.vercel.app/"; 
 }
 
 export const SESSION_TOKEN_KEY = "app_session_token";
