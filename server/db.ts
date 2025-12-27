@@ -1,5 +1,6 @@
-import { and, eq, gt, lte, inArray } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { and, eq, inArray } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import {
   InsertUser,
   users,
@@ -20,11 +21,11 @@ import { ENV } from "./_core/env.js";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const client = postgres(process.env.DATABASE_URL);
+      _db = drizzle(client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -33,6 +34,7 @@ export async function getDb() {
   return _db;
 }
 
+// El resto del código es igual, solo cambia la forma de conectar
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
     throw new Error("User openId is required for upsert");
@@ -83,7 +85,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
+    await db.insert(users).values(values).onConflictDoUpdate({
+      target: users.openId,
       set: updateSet,
     });
   } catch (error) {
@@ -100,7 +103,6 @@ export async function getUserByOpenId(openId: string) {
   }
 
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -112,7 +114,6 @@ export async function getUserByEmail(email: string) {
   }
 
   const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
-
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -130,12 +131,8 @@ export async function createUser(data: any) {
     lastSignedIn: new Date(),
   };
   
-  const result = await db.insert(users).values(newUser);
-  
-  return { 
-    id: result[0].insertId, 
-    ...newUser 
-  };
+  const result = await db.insert(users).values(newUser).returning();
+  return result[0];
 }
 
 // ============ MISSIONS ============
@@ -143,8 +140,8 @@ export async function createUser(data: any) {
 export async function createMission(data: InsertMission) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(missions).values(data);
-  return result[0].insertId;
+  const result = await db.insert(missions).values(data).returning();
+  return result[0].id;
 }
 
 export async function getMissionsByChild(childId: number) {
@@ -183,8 +180,8 @@ export async function deleteMission(id: number) {
 export async function createReward(data: InsertReward) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(rewards).values(data);
-  return result[0].insertId;
+  const result = await db.insert(rewards).values(data).returning();
+  return result[0].id;
 }
 
 export async function getRewardsByParent(parentId: number) {
@@ -217,8 +214,8 @@ export async function deleteReward(id: number) {
 export async function createCoinTransaction(data: InsertCoinTransaction) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(coinTransactions).values(data);
-  return result[0].insertId;
+  const result = await db.insert(coinTransactions).values(data).returning();
+  return result[0].id;
 }
 
 export async function getUserCoinBalance(userId: number) {
@@ -242,8 +239,8 @@ export async function getUserCoinTransactions(userId: number) {
 export async function createRedeemedReward(data: InsertRedeemedReward) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(redeemedRewards).values(data);
-  return result[0].insertId;
+  const result = await db.insert(redeemedRewards).values(data).returning();
+  return result[0].id;
 }
 
 export async function getRedeemedRewardsByChild(childId: number) {
@@ -297,8 +294,8 @@ export async function getPendingRedeemedRewardsByChildren(childIds: number[]) {
 export async function createFamilyRelation(data: InsertFamilyRelation) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(familyRelations).values(data);
-  return result[0].insertId;
+  const result = await db.insert(familyRelations).values(data).returning();
+  return result[0].id;
 }
 
 export async function getChildrenByParent(parentId: number) {
@@ -312,7 +309,6 @@ export async function getParentsByChild(childId: number) {
   if (!db) return [];
   return db.select().from(familyRelations).where(eq(familyRelations.childId, childId));
 }
-
 
 // ============ INVITATION CODES ============
 
@@ -330,7 +326,7 @@ export async function createInvitationCode(parentId: number) {
   if (!db) throw new Error("Database not available");
   
   const code = generateInvitationCode();
-  const result = await db.insert(invitationCodes).values({
+  await db.insert(invitationCodes).values({
     parentId,
     code,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
