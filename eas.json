@@ -1,0 +1,25 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appExtensions": {
+      "expo-router": {
+        "output": "static"
+      }
+    }
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {}
+  },
+  "submit": {
+    "production": {}
+  }
+}
