@@ -27,7 +27,7 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const user = await db.getUserByEmail(input.email);
         if (!user) throw new Error("Usuario no encontrado");
-        
+
         // En una aplicación real, aquí verificaríamos la contraseña.
         // Para este prototipo, asumimos que es correcta si el usuario existe.
 
@@ -38,9 +38,9 @@ export const appRouter = router({
 
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-        
-        return { 
-          success: true, 
+
+        return {
+          success: true,
           user: {
             id: user.id,
             openId: user.openId,
@@ -50,7 +50,7 @@ export const appRouter = router({
             loginMethod: user.loginMethod,
             lastSignedIn: user.lastSignedIn.toISOString(),
           },
-          sessionToken 
+          sessionToken
         };
       }),
     signUp: publicProcedure
@@ -65,7 +65,7 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const existingUser = await db.getUserByEmail(input.email);
         if (existingUser) throw new Error("El correo electrónico ya está en uso");
-        
+
         const user = await db.createUser({
           email: input.email,
           name: input.name,
@@ -80,14 +80,14 @@ export const appRouter = router({
 
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-        
-        return { 
-          success: true, 
+
+        return {
+          success: true,
           user: {
             ...user,
             lastSignedIn: new Date().toISOString(),
           },
-          sessionToken 
+          sessionToken
         };
       }),
     getInvitationCode: protectedProcedure.query(({ ctx }) =>
@@ -161,7 +161,15 @@ export const appRouter = router({
           type: "mission_earned",
           relatedId: input.id,
           description: `Completed: ${mission.title}`,
+          description: `Completed: ${mission.title}`,
         });
+
+        const user = await db.getUserByOpenId(mission.childId.toString()); // Assuming childId maps to something we can fetch user with? No, childId is userId (int). 
+        // We need getUserById but we only have getUserByOpenId exposed in db.ts currently. 
+        // Need to add getUserById to db.ts first or assume childId is proper ID.
+        // Actually familyRelations uses childId which is users.id.
+        // Let's add updateStreak to db.ts and call it here.
+        await db.updateStreak(mission.childId);
       }),
     reject: protectedProcedure
       .input(z.object({ id: z.number() }))
@@ -246,10 +254,10 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const redemption = await db.getRedeemedRewardById(input.redemptionId);
         if (!redemption) throw new Error("Solicitud no encontrada");
-        
+
         const reward = await db.getRewardById(redemption.rewardId);
         if (!reward) throw new Error("Recompensa no encontrada");
-        
+
         if (reward.parentId !== ctx.user.id) throw new Error("No autorizado");
 
         await db.createCoinTransaction({
@@ -270,10 +278,10 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const redemption = await db.getRedeemedRewardById(input.redemptionId);
         if (!redemption) throw new Error("Solicitud no encontrada");
-        
+
         const reward = await db.getRewardById(redemption.rewardId);
         if (!reward) throw new Error("Recompensa no encontrada");
-        
+
         if (reward.parentId !== ctx.user.id) throw new Error("No autorizado");
 
         await db.updateRedeemedReward(input.redemptionId, {

@@ -6,10 +6,6 @@ import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 
 const frequencies = ["Diaria", "Semanal", "Única"];
-const children = [
-  { id: 1, name: "Mateo", avatar: "👦" },
-  { id: 2, name: "Sofía", avatar: "👧" },
-];
 
 export default function CreateMissionScreen() {
   const router = useRouter();
@@ -17,8 +13,11 @@ export default function CreateMissionScreen() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [frequency, setFrequency] = useState("Diaria");
-  const [selectedChild, setSelectedChild] = useState(children[0].id);
+  const [selectedChild, setSelectedChild] = useState<number | null>(null);
   const [rewardCoins, setRewardCoins] = useState(50);
+
+  const { data: childrenList = [], isLoading: childrenLoading } =
+    trpc.family.getChildren.useQuery(undefined, { enabled: isAuthenticated });
 
   const { mutate: createMission, isPending } = trpc.missions.create.useMutation({
     onSuccess: () => {
@@ -33,7 +32,7 @@ export default function CreateMissionScreen() {
         description: description || undefined,
         category: "general",
         rewardCoins,
-        childId: selectedChild,
+        childId: selectedChild || 0,
       });
     }
   };
@@ -110,14 +109,12 @@ export default function CreateMissionScreen() {
                       transform: [{ scale: pressed ? 0.95 : 1 }],
                     },
                   ]}
-                  className={`flex-1 py-3 rounded-full items-center ${
-                    frequency === freq ? "bg-primary" : "bg-surface border border-border"
-                  }`}
+                  className={`flex-1 py-3 rounded-full items-center ${frequency === freq ? "bg-primary" : "bg-surface border border-border"
+                    }`}
                 >
                   <Text
-                    className={`font-bold ${
-                      frequency === freq ? "text-black" : "text-foreground"
-                    }`}
+                    className={`font-bold ${frequency === freq ? "text-black" : "text-foreground"
+                      }`}
                   >
                     {freq}
                   </Text>
@@ -129,42 +126,38 @@ export default function CreateMissionScreen() {
           {/* Child Selection */}
           <View className="gap-2">
             <Text className="font-bold text-foreground">¿Quién es el héroe?</Text>
-            <View className="flex-row gap-3">
-              {children.map((child) => (
-                <Pressable
-                  key={child.id}
-                  onPress={() => setSelectedChild(child.id)}
-                  style={({ pressed }) => [
-                    {
-                      transform: [{ scale: pressed ? 0.95 : 1 }],
-                    },
-                  ]}
-                  className={`items-center gap-2 p-3 rounded-2xl ${
-                    selectedChild === child.id ? "bg-primary" : "bg-surface"
-                  }`}
-                >
-                  <View
-                    className={`w-16 h-16 rounded-full items-center justify-center border-4 ${
-                      selectedChild === child.id ? "border-black" : "border-transparent"
-                    }`}
+            <View className="flex-row gap-3 flex-wrap">
+              {childrenLoading ? (
+                <ActivityIndicator color="#6366F1" />
+              ) : childrenList.length === 0 ? (
+                <Text className="text-muted">No tienes hijos asociados aún.</Text>
+              ) : (
+                childrenList.map((relation) => (
+                  <Pressable
+                    key={relation.childId}
+                    onPress={() => setSelectedChild(relation.childId)}
+                    style={({ pressed }) => [
+                      {
+                        transform: [{ scale: pressed ? 0.95 : 1 }],
+                      },
+                    ]}
+                    className={`items-center gap-2 p-3 rounded-2xl ${selectedChild === relation.childId ? "bg-primary" : "bg-surface"
+                      }`}
                   >
-                    <Text className="text-3xl">{child.avatar}</Text>
-                  </View>
-                  <Text
-                    className={`font-bold text-sm ${
-                      selectedChild === child.id ? "text-black" : "text-foreground"
-                    }`}
-                  >
-                    {child.name}
-                  </Text>
-                </Pressable>
-              ))}
-              <Pressable className="items-center gap-2 p-3 rounded-2xl bg-surface">
-                <View className="w-16 h-16 rounded-full items-center justify-center bg-border">
-                  <Text className="text-2xl">+</Text>
-                </View>
-                <Text className="font-bold text-xs text-foreground text-center">Añadir</Text>
-              </Pressable>
+                    <View
+                      className={`w-16 h-16 rounded-full items-center justify-center border-4 ${selectedChild === relation.childId ? "border-black" : "border-transparent"
+                        }`}
+                    >
+                      <Text className="text-3xl">👧</Text>
+                    </View>
+                    <Text
+                      className={`font-bold text-sm ${selectedChild === relation.childId ? "text-black" : "text-foreground"
+                        }`}
+                    >
+                      {relation.childName || "Hijo"}
+                    </Text>
+                  </Pressable>
+                )))}
             </View>
           </View>
 
@@ -177,7 +170,10 @@ export default function CreateMissionScreen() {
 
             <View className="bg-surface rounded-2xl p-6 items-center gap-4">
               <View className="flex-row items-center gap-4">
-                <Pressable className="bg-border rounded-full w-12 h-12 items-center justify-center">
+                <Pressable
+                  onPress={() => setRewardCoins(Math.max(0, rewardCoins - 10))}
+                  className="bg-border rounded-full w-12 h-12 items-center justify-center"
+                >
                   <Text className="text-2xl font-bold text-foreground">−</Text>
                 </Pressable>
                 <Text className="text-5xl font-bold text-foreground">{rewardCoins}</Text>
@@ -207,9 +203,8 @@ export default function CreateMissionScreen() {
                 transform: [{ scale: pressed ? 0.97 : 1 }],
               },
             ]}
-            className={`${
-              isPending || !title.trim() ? "bg-border" : "bg-primary"
-            } rounded-full py-4 items-center mt-4`}
+            className={`${isPending || !title.trim() ? "bg-border" : "bg-primary"
+              } rounded-full py-4 items-center mt-4`}
           >
             <Text className={`font-bold text-lg ${isPending || !title.trim() ? "text-muted" : "text-black"}`}>
               {isPending ? "Creando..." : "🚀 Lanzar Misión"}

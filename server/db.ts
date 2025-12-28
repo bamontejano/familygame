@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -120,7 +120,7 @@ export async function getUserByEmail(email: string) {
 export async function createUser(data: any) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   const openId = `email_${data.email}_${Date.now()}`;
   const newUser = {
     openId,
@@ -130,7 +130,7 @@ export async function createUser(data: any) {
     loginMethod: "email",
     lastSignedIn: new Date(),
   };
-  
+
   const result = await db.insert(users).values(newUser).returning();
   return result[0];
 }
@@ -265,7 +265,7 @@ export async function updateRedeemedReward(id: number, data: Partial<InsertRedee
 export async function getPendingRedeemedRewardsByChildren(childIds: number[]) {
   const db = await getDb();
   if (!db) return [];
-  
+
   return db
     .select({
       id: redeemedRewards.id,
@@ -301,7 +301,23 @@ export async function createFamilyRelation(data: InsertFamilyRelation) {
 export async function getChildrenByParent(parentId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(familyRelations).where(eq(familyRelations.parentId, parentId));
+
+  // Agregamos la suma de transacciones para obtener el saldo real
+  return db
+    .select({
+      id: familyRelations.id,
+      parentId: familyRelations.parentId,
+      childId: familyRelations.childId,
+      createdAt: familyRelations.createdAt,
+      childName: users.name,
+      childEmail: users.email,
+      coinBalance: sql<number>`COALESCE(SUM(${coinTransactions.amount}), 0)`.mapWith(Number),
+    })
+    .from(familyRelations)
+    .innerJoin(users, eq(familyRelations.childId, users.id))
+    .leftJoin(coinTransactions, eq(coinTransactions.userId, familyRelations.childId))
+    .where(eq(familyRelations.parentId, parentId))
+    .groupBy(familyRelations.id, users.id);
 }
 
 export async function getParentsByChild(childId: number) {
@@ -324,57 +340,108 @@ export function generateInvitationCode(): string {
 export async function createInvitationCode(parentId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   const code = generateInvitationCode();
   await db.insert(invitationCodes).values({
     parentId,
     code,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   });
-  
+
   return code;
 }
 
 export async function getInvitationCodeByParent(parentId: number) {
   const db = await getDb();
   if (!db) return undefined;
-  
+
   const result = await db
     .select()
     .from(invitationCodes)
     .where(eq(invitationCodes.parentId, parentId))
     .limit(1);
-  
+
   return result.length > 0 ? result[0] : undefined;
 }
 
 export async function validateAndUseInvitationCode(code: string, childId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   const result = await db
     .select()
     .from(invitationCodes)
     .where(eq(invitationCodes.code, code))
     .limit(1);
-  
+
   if (result.length === 0) throw new Error("Invalid invitation code");
-  
+
   const inviteCode = result[0];
   if (inviteCode.usedBy) throw new Error("Invitation code already used");
   if (inviteCode.expiresAt && inviteCode.expiresAt < new Date()) {
     throw new Error("Invitation code expired");
   }
-  
+
   await db
     .update(invitationCodes)
     .set({ usedBy: childId, usedAt: new Date() })
     .where(eq(invitationCodes.id, inviteCode.id));
-  
+
   await createFamilyRelation({
     parentId: inviteCode.parentId,
     childId,
   });
-  
+
   return inviteCode.parentId;
+}
+
+export async function updateStreak(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+
+  const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (user.length === 0) return;
+  const userData = user[0];
+
+  const now = new Date();
+  const lastUpdate = userData.lastStreakUpdate;
+
+  if (!lastUpdate) {
+    // First time
+    await db.update(users).set({
+      currentStreak: 1,
+      lastStreakUpdate: now
+    }).where(eq(users.id, userId));
+    return;
+  }
+
+  const diffTime = Math.abs(now.getTime() - lastUpdate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  // If last update was yesterday (< 48h and different day... simple check: dates diff)
+  // Actually better check: is it the same day?
+  const isSameDay = now.toDateString() === lastUpdate.toDateString();
+
+  if (isSameDay) {
+    // Already updated today
+    return;
+  }
+
+  // Check if it was yesterday
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = yesterday.toDateString() === lastUpdate.toDateString();
+
+  if (isYesterday) {
+    await db.update(users).set({
+      currentStreak: userData.currentStreak + 1,
+      lastStreakUpdate: now
+    }).where(eq(users.id, userId));
+  } else {
+    // Reset streak
+    await db.update(users).set({
+      currentStreak: 1,
+      lastStreakUpdate: now
+    }).where(eq(users.id, userId));
+  }
 }

@@ -5,8 +5,11 @@ import { MissionCard } from "@/components/mission-card";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 
+import { useRouter } from "expo-router";
+
 export default function MissionsScreen() {
   const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
 
   const { data: missions = [], isLoading } = trpc.missions.listByChild.useQuery(undefined, {
@@ -36,14 +39,12 @@ export default function MissionsScreen() {
                   opacity: pressed ? 0.7 : 1,
                 },
               ]}
-              className={`flex-1 py-2 px-4 rounded-lg ${
-                activeTab === "active" ? "bg-primary" : "bg-surface border border-border"
-              }`}
+              className={`flex-1 py-2 px-4 rounded-lg ${activeTab === "active" ? "bg-primary" : "bg-surface border border-border"
+                }`}
             >
               <Text
-                className={`text-center font-semibold ${
-                  activeTab === "active" ? "text-white" : "text-foreground"
-                }`}
+                className={`text-center font-semibold ${activeTab === "active" ? "text-white" : "text-foreground"
+                  }`}
               >
                 Active
               </Text>
@@ -55,14 +56,12 @@ export default function MissionsScreen() {
                   opacity: pressed ? 0.7 : 1,
                 },
               ]}
-              className={`flex-1 py-2 px-4 rounded-lg ${
-                activeTab === "completed" ? "bg-primary" : "bg-surface border border-border"
-              }`}
+              className={`flex-1 py-2 px-4 rounded-lg ${activeTab === "completed" ? "bg-primary" : "bg-surface border border-border"
+                }`}
             >
               <Text
-                className={`text-center font-semibold ${
-                  activeTab === "completed" ? "text-white" : "text-foreground"
-                }`}
+                className={`text-center font-semibold ${activeTab === "completed" ? "text-white" : "text-foreground"
+                  }`}
               >
                 Completed
               </Text>
@@ -83,9 +82,7 @@ export default function MissionsScreen() {
                   category={item.category}
                   rewardCoins={item.rewardCoins}
                   status={item.status as any}
-                  onPress={() => {
-                    // TODO: Navigate to mission detail
-                  }}
+                  onPress={() => router.push(`/mission/${item.id}`)}
                 />
               )}
               scrollEnabled={false}

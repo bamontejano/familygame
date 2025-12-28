@@ -34,7 +34,7 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
 
   const baseUrl = getApiBaseUrl();
   let url: string;
-  
+
   if (baseUrl) {
     const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
@@ -43,7 +43,7 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
     // Si no hay baseUrl, intentamos usar la ruta relativa asegurando que empiece por /
     url = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   }
-  
+
   console.log("[API] Full URL:", url);
 
   try {
@@ -137,6 +137,8 @@ export async function getMe(): Promise<{
   name: string | null;
   email: string | null;
   loginMethod: string | null;
+  role: string | null;
+  currentStreak: number;
   lastSignedIn: string;
 } | null> {
   try {
