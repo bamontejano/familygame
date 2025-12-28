@@ -22,6 +22,9 @@ export default function HomeScreen() {
   const { data: parentMissions = [], isLoading: parentMissionsLoading } =
     trpc.missions.listByParent.useQuery(undefined, { enabled: isAuthenticated && isParent });
 
+  const { data: activeParents = [], isLoading: parentsLoading } =
+    trpc.family.getParents.useQuery(undefined, { enabled: isAuthenticated && !isParent });
+
   const { data: pendingRedemptions = [] } =
     trpc.redeemedRewards.listPendingByParent.useQuery(undefined, { enabled: isAuthenticated && isParent });
 
@@ -137,6 +140,30 @@ export default function HomeScreen() {
             </View>
           ) : (
             <View className="gap-6">
+              {/* Unlinked Child Prompt */}
+              {!parentsLoading && activeParents.length === 0 && (
+                <View className="bg-primary/10 rounded-3xl p-6 border border-primary/30 gap-4">
+                  <View className="flex-row items-center gap-3">
+                    <View className="w-12 h-12 bg-primary/20 rounded-2xl items-center justify-center">
+                      <Text className="text-2xl">🔗</Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-foreground font-black text-lg">Únete a tu familia</Text>
+                      <Text className="text-muted text-xs font-medium">
+                        Pide el código a tus padres para empezar a ganar monedas.
+                      </Text>
+                    </View>
+                  </View>
+                  <Pressable
+                    onPress={() => router.push("/auth/join-family")}
+                    style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
+                    className="bg-primary p-4 rounded-xl items-center"
+                  >
+                    <Text className="text-black font-black uppercase tracking-tight">Ingresar Código</Text>
+                  </Pressable>
+                </View>
+              )}
+
               <View className="flex-row justify-between items-center px-1">
                 <Text className="text-xl font-black text-foreground tracking-tight">Próximas Misiones</Text>
                 <Pressable onPress={() => router.push("/child-dashboard")}>

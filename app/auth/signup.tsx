@@ -11,6 +11,7 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [invitationCode, setInvitationCode] = useState("");
   const [role, setRole] = useState<"parent" | "child">("parent");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -21,7 +22,13 @@ export default function SignUpScreen() {
       }
       if (data.user) {
         await Auth.setUserInfo({
-          ...data.user,
+          id: data.user.id,
+          openId: data.user.openId,
+          name: data.user.name,
+          email: data.user.email,
+          loginMethod: data.user.loginMethod,
+          role: data.user.role as "parent" | "child",
+          currentStreak: data.user.currentStreak,
           lastSignedIn: new Date(data.user.lastSignedIn),
         });
       }
@@ -53,6 +60,7 @@ export default function SignUpScreen() {
       email: email.trim(),
       password,
       role,
+      invitationCode: invitationCode.trim().toUpperCase() || undefined,
     });
   };
 
@@ -111,9 +119,8 @@ export default function SignUpScreen() {
                   onPress={() => setRole("parent")}
                   disabled={isPending}
                   style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.95 : 1 }] }]}
-                  className={`flex-1 py-3 rounded-xl items-center ${
-                    role === "parent" ? "bg-primary" : "bg-surface border border-border"
-                  }`}
+                  className={`flex-1 py-3 rounded-xl items-center ${role === "parent" ? "bg-primary" : "bg-surface border border-border"
+                    }`}
                 >
                   <Text className={`font-bold ${role === "parent" ? "text-black" : "text-foreground"}`}>
                     👨‍👩‍👧 Padre
@@ -123,9 +130,8 @@ export default function SignUpScreen() {
                   onPress={() => setRole("child")}
                   disabled={isPending}
                   style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.95 : 1 }] }]}
-                  className={`flex-1 py-3 rounded-xl items-center ${
-                    role === "child" ? "bg-primary" : "bg-surface border border-border"
-                  }`}
+                  className={`flex-1 py-3 rounded-xl items-center ${role === "child" ? "bg-primary" : "bg-surface border border-border"
+                    }`}
                 >
                   <Text className={`font-bold ${role === "child" ? "text-black" : "text-foreground"}`}>
                     👧 Hijo
@@ -133,6 +139,26 @@ export default function SignUpScreen() {
                 </Pressable>
               </View>
             </View>
+
+            {/* Invitation Code */}
+            {role === "child" && (
+              <View className="gap-2">
+                <Text className="font-bold text-foreground text-sm">Código de Invitación (Opcional)</Text>
+                <TextInput
+                  placeholder="ABC12345"
+                  placeholderTextColor="#687076"
+                  value={invitationCode}
+                  onChangeText={(text) => setInvitationCode(text.toUpperCase())}
+                  autoCapitalize="characters"
+                  maxLength={8}
+                  editable={!isPending}
+                  className="bg-surface rounded-xl px-4 py-3 text-foreground border border-primary/50 text-center font-bold tracking-widest text-lg"
+                />
+                <Text className="text-xs text-muted text-center px-4">
+                  Si no tienes código aún, puedes unirte más tarde desde tu perfil.
+                </Text>
+              </View>
+            )}
 
             {/* Password Input */}
             <View className="gap-2">
@@ -172,9 +198,8 @@ export default function SignUpScreen() {
               onPress={handleSignUp}
               disabled={isPending}
               style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.97 : 1 }] }]}
-              className={`${
-                isPending ? "bg-border" : "bg-primary"
-              } rounded-xl py-4 items-center mt-4`}
+              className={`${isPending ? "bg-border" : "bg-primary"
+                } rounded-xl py-4 items-center mt-4`}
             >
               {isPending ? (
                 <ActivityIndicator color="#000" />
@@ -182,18 +207,6 @@ export default function SignUpScreen() {
                 <Text className="text-black font-bold text-lg">Crear Cuenta</Text>
               )}
             </Pressable>
-
-            {/* Join Family Link */}
-            {role === "child" && (
-              <Pressable
-                onPress={() => router.push("/auth/join-family")}
-                disabled={isPending}
-                className="py-3 items-center"
-              >
-                <Text className="text-muted text-sm">¿Tienes un código de invitación?</Text>
-                <Text className="text-primary font-bold">Únete a tu familia</Text>
-              </Pressable>
-            )}
           </View>
 
           {/* Sign In Link */}
