@@ -8,7 +8,7 @@ const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
   appName: "FamilyGame",
-  appSlug: "FamilyGame",
+  appSlug: "familygame",
   logoUrl: "",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
