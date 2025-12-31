@@ -1,6 +1,5 @@
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Platform } from "react-native";
@@ -12,6 +11,7 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const isParent = user?.role === "parent";
+  const isChild = user?.role === "child";
 
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   const tabBarHeight = 56 + bottomPadding;
@@ -32,6 +32,7 @@ export default function TabLayout() {
         },
       }}
     >
+      {/* Pantalla principal según rol */}
       <Tabs.Screen
         name="index"
         options={{
@@ -39,32 +40,48 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
-      {isParent ? (
-        <Tabs.Screen
-          name="parent-dashboard"
-          options={{
-            title: "Panel Control",
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
-          }}
-        />
-      ) : (
-        <Tabs.Screen
-          name="child-dashboard"
-          options={{
-            title: "Mis Misiones",
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="checklist" color={color} />,
-          }}
-        />
+
+      {/* PESTAÑAS EXCLUSIVAS PARA PADRES */}
+      {isParent && (
+        <>
+          <Tabs.Screen
+            name="create-mission"
+            options={{
+              title: "Crear Misión",
+              tabBarIcon: ({ color }) => <IconSymbol size={28} name="plus.circle.fill" color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="rewards"
+            options={{
+              title: "Recompensas",
+              tabBarIcon: ({ color }) => <IconSymbol size={28} name="gift.fill" color={color} />,
+            }}
+          />
+        </>
       )}
-      {!isParent && (
-        <Tabs.Screen
-          name="shop"
-          options={{
-            title: "Tienda",
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
-          }}
-        />
+
+      {/* PESTAÑAS EXCLUSIVAS PARA HIJOS */}
+      {isChild && (
+        <>
+          <Tabs.Screen
+            name="missions"
+            options={{
+              title: "Mis Misiones",
+              tabBarIcon: ({ color }) => <IconSymbol size={28} name="checklist" color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="shop"
+            options={{
+              title: "Tienda",
+              tabBarIcon: ({ color }) => <IconSymbol size={28} name="cart.fill" color={color} />,
+            }}
+          />
+        </>
       )}
+
+      {/* Perfil para ambos roles */}
       <Tabs.Screen
         name="profile"
         options={{
@@ -72,11 +89,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
-      {/* Hide metadata/hidden screens from tab bar */}
-      <Tabs.Screen name="create-mission" options={{ href: null }} />
+
+      {/* OCULTAR PANTALLAS DEL PADRE cuando es HIJO */}
+      <Tabs.Screen name="parent-dashboard" options={{ href: null }} />
       <Tabs.Screen name="invite-children" options={{ href: null }} />
-      <Tabs.Screen name="missions" options={{ href: null }} />
-      <Tabs.Screen name="rewards" options={{ href: null }} />
+      
+      {/* OCULTAR PANTALLAS DEL HIJO cuando es PADRE */}
+      <Tabs.Screen name="child-dashboard" options={{ href: null }} />
     </Tabs>
   );
 }
