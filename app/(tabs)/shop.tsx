@@ -22,7 +22,7 @@ export default function ShopScreen() {
     enabled: isAuthenticated,
   });
 
-  const { data: rewards = [], isLoading: rewardsLoading } = trpc.rewards.listByParent.useQuery(
+  const { data: rewards = [], isLoading: rewardsLoading } = trpc.rewards.listByChild.useQuery(
     undefined,
     {
       enabled: isAuthenticated,
@@ -36,7 +36,7 @@ export default function ShopScreen() {
       setShowConfirm(false);
       setSelectedReward(null);
       Alert.alert(
-        "Solicitud Enviada", 
+        "Solicitud Enviada",
         "Tu solicitud de canje ha sido enviada a tus padres. Las monedas se descontarán cuando la aprueben."
       );
     },
@@ -107,14 +107,12 @@ export default function ShopScreen() {
                       transform: [{ scale: pressed ? 0.95 : 1 }],
                     },
                   ]}
-                  className={`px-4 py-2 rounded-full ${
-                    selectedCategory === cat.id ? "bg-black" : "bg-surface border border-border"
-                  }`}
+                  className={`px-4 py-2 rounded-full ${selectedCategory === cat.id ? "bg-black" : "bg-surface border border-border"
+                    }`}
                 >
                   <Text
-                    className={`font-semibold ${
-                      selectedCategory === cat.id ? "text-white" : "text-foreground"
-                    }`}
+                    className={`font-semibold ${selectedCategory === cat.id ? "text-white" : "text-foreground"
+                      }`}
                   >
                     {cat.label}
                   </Text>
@@ -139,7 +137,7 @@ export default function ShopScreen() {
               columnWrapperStyle={{ gap: 12 }}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
-                  <Pressable
+                <Pressable
                   onPress={() => {
                     setSelectedReward(item as any);
                     setShowConfirm(true);
@@ -173,7 +171,7 @@ export default function ShopScreen() {
           <View className="bg-surface rounded-2xl p-6 border border-border">
             <Text className="text-foreground font-bold mb-2">¿Cómo funciona?</Text>
             <Text className="text-sm text-muted">
-              Completa las misiones que te asignan tus padres para ganar monedas. 
+              Completa las misiones que te asignan tus padres para ganar monedas.
               Cuando tengas suficientes, ¡podrás canjearlas aquí por premios increíbles!
             </Text>
           </View>
@@ -200,9 +198,8 @@ export default function ShopScreen() {
               <Pressable
                 onPress={handleRedeem}
                 disabled={coinBalance < (selectedReward?.costCoins || 0) || isRedeeming}
-                className={`flex-1 rounded-full py-3 ${
-                  coinBalance < (selectedReward?.costCoins || 0) ? "bg-border" : "bg-primary"
-                }`}
+                className={`flex-1 rounded-full py-3 ${coinBalance < (selectedReward?.costCoins || 0) ? "bg-border" : "bg-primary"
+                  }`}
               >
                 {isRedeeming ? (
                   <ActivityIndicator color="#000" size="small" />

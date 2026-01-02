@@ -190,6 +190,24 @@ export async function getRewardsByParent(parentId: number) {
   return db.select().from(rewards).where(and(eq(rewards.parentId, parentId), eq(rewards.isActive, true)));
 }
 
+export async function getRewardsByChild(childId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get parents of this child
+  const parents = await db.select().from(familyRelations).where(eq(familyRelations.childId, childId));
+  const parentIds = parents.map(p => p.parentId);
+
+  if (parentIds.length === 0) return [];
+
+  return db.select().from(rewards).where(
+    and(
+      inArray(rewards.parentId, parentIds),
+      eq(rewards.isActive, true)
+    )
+  );
+}
+
 export async function getRewardById(id: number) {
   const db = await getDb();
   if (!db) return undefined;

@@ -204,6 +204,9 @@ export const appRouter = router({
     listByParent: protectedProcedure.query(({ ctx }) =>
       db.getRewardsByParent(ctx.user.id)
     ),
+    listByChild: protectedProcedure.query(({ ctx }) =>
+      db.getRewardsByChild(ctx.user.id)
+    ),
     getById: protectedProcedure
       .input(z.object({ id: z.number() }))
       .query(({ input }) => db.getRewardById(input.id)),

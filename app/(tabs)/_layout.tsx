@@ -41,45 +41,41 @@ export default function TabLayout() {
         }}
       />
 
-      {/* PESTAÑAS EXCLUSIVAS PARA PADRES */}
-      {isParent && (
-        <>
-          <Tabs.Screen
-            name="create-mission"
-            options={{
-              title: "Crear Misión",
-              tabBarIcon: ({ color }) => <IconSymbol size={28} name="plus.circle.fill" color={color} />,
-            }}
-          />
-          <Tabs.Screen
-            name="rewards"
-            options={{
-              title: "Recompensas",
-              tabBarIcon: ({ color }) => <IconSymbol size={28} name="gift.fill" color={color} />,
-            }}
-          />
-        </>
-      )}
+      {/* PESTAÑAS PARA PADRES */}
+      <Tabs.Screen
+        name="create-mission"
+        options={{
+          title: "Crear Misión",
+          href: isParent ? undefined : null,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="plus.circle.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="rewards"
+        options={{
+          title: "Recompensas",
+          href: isParent ? undefined : null,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gift.fill" color={color} />,
+        }}
+      />
 
-      {/* PESTAÑAS EXCLUSIVAS PARA HIJOS */}
-      {isChild && (
-        <>
-          <Tabs.Screen
-            name="missions"
-            options={{
-              title: "Mis Misiones",
-              tabBarIcon: ({ color }) => <IconSymbol size={28} name="checklist" color={color} />,
-            }}
-          />
-          <Tabs.Screen
-            name="shop"
-            options={{
-              title: "Tienda",
-              tabBarIcon: ({ color }) => <IconSymbol size={28} name="cart.fill" color={color} />,
-            }}
-          />
-        </>
-      )}
+      {/* PESTAÑAS PARA HIJOS */}
+      <Tabs.Screen
+        name="missions"
+        options={{
+          title: "Mis Misiones",
+          href: isChild ? undefined : null,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="checklist" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="shop"
+        options={{
+          title: "Tienda",
+          href: isChild ? undefined : null,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="cart.fill" color={color} />,
+        }}
+      />
 
       {/* Perfil para ambos roles */}
       <Tabs.Screen
@@ -90,24 +86,10 @@ export default function TabLayout() {
         }}
       />
 
-      {/* OCULTAR PANTALLAS DEL PADRE cuando es HIJO */}
+      {/* RUTAS OCULTAS (SIEMPRE) */}
       <Tabs.Screen name="parent-dashboard" options={{ href: null }} />
-      <Tabs.Screen name="invite-children" options={{ href: null }} />
-      {isChild && (
-        <>
-          <Tabs.Screen name="create-mission" options={{ href: null }} />
-          <Tabs.Screen name="rewards" options={{ href: null }} />
-        </>
-      )}
-
-      {/* OCULTAR PANTALLAS DEL HIJO cuando es PADRE */}
       <Tabs.Screen name="child-dashboard" options={{ href: null }} />
-      {isParent && (
-        <>
-          <Tabs.Screen name="missions" options={{ href: null }} />
-          <Tabs.Screen name="shop" options={{ href: null }} />
-        </>
-      )}
+      <Tabs.Screen name="invite-children" options={{ href: null }} />
     </Tabs>
   );
 }
