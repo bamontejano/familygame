@@ -93,6 +93,12 @@ export default function TabLayout() {
       {/* OCULTAR PANTALLAS DEL PADRE cuando es HIJO */}
       <Tabs.Screen name="parent-dashboard" options={{ href: null }} />
       <Tabs.Screen name="invite-children" options={{ href: null }} />
+      {isChild && (
+        <>
+          <Tabs.Screen name="create-mission" options={{ href: null }} />
+          <Tabs.Screen name="rewards" options={{ href: null }} />
+        </>
+      )}
 
       {/* OCULTAR PANTALLAS DEL HIJO cuando es PADRE */}
       <Tabs.Screen name="child-dashboard" options={{ href: null }} />

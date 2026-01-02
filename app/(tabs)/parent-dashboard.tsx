@@ -20,7 +20,7 @@ export default function ParentDashboardScreen() {
   const { data: children = [], isLoading: childrenLoading } =
     trpc.family.getChildren.useQuery(undefined, { enabled: isAuthenticated });
 
-  const pendingApproval = missions.filter((m) => m.status === "pending");
+  const pendingApproval = missions.filter((m) => m.status === "pending" || m.status === "completed");
 
   const utils = trpc.useUtils();
 
