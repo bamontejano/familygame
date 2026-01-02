@@ -58,6 +58,9 @@ export default function ChildDashboardScreen() {
             </Pressable>
           </View>
 
+          {/* Latest Alerts */}
+          <RecentApprovalsAlert />
+
           {/* Coin Balance Card */}
           <View className="bg-surface rounded-2xl p-6">
             <Text className="text-sm text-muted mb-2">Mis Monedas</Text>
@@ -139,5 +142,35 @@ export default function ChildDashboardScreen() {
         </View>
       </ScrollView>
     </ScreenContainer>
+  );
+}
+
+function RecentApprovalsAlert() {
+  const { data: recentApprovals = [] } = trpc.redeemedRewards.getRecentApprovals.useQuery(undefined, {
+    refetchInterval: 30000, // Check ogni 30s
+  });
+
+  if (recentApprovals.length === 0) return null;
+
+  return (
+    <View className="gap-3">
+      {recentApprovals.map((approval: any) => (
+        <View
+          key={approval.id}
+          className="bg-primary/20 border border-primary/40 rounded-3xl p-5 flex-row items-center gap-4 shadow-sm mb-2"
+        >
+          <View className="w-14 h-14 bg-primary rounded-2xl items-center justify-center shadow-lg">
+            <Text className="text-3xl">{approval.rewardIcon || "🎁"}</Text>
+          </View>
+          <View className="flex-1">
+            <Text className="text-primary font-black uppercase text-[10px] tracking-wider mb-0.5">¡Excelentes Noticias!</Text>
+            <Text className="text-foreground font-bold text-base leading-tight">
+              Tus padres aprobaron: <Text className="text-primary">{approval.rewardTitle}</Text>
+            </Text>
+            <Text className="text-muted text-[10px] font-medium mt-1">¡Ya puedes disfrutar de tu premio!</Text>
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }

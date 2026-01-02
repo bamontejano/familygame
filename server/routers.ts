@@ -178,7 +178,6 @@ export const appRouter = router({
           type: "mission_earned",
           relatedId: input.id,
           description: `Completed: ${mission.title}`,
-          description: `Completed: ${mission.title}`,
         });
 
         const user = await db.getUserByOpenId(mission.childId.toString()); // Assuming childId maps to something we can fetch user with? No, childId is userId (int). 
@@ -340,6 +339,37 @@ export const appRouter = router({
       const childIds = children.map(c => c.childId);
       if (childIds.length === 0) return [];
       return db.getPendingRedeemedRewardsByChildren(childIds);
+    }),
+    getRecentApprovals: protectedProcedure.query(async ({ ctx }) => {
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return [];
+
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+      // Using raw query or similar because we need to join with rewards to get the title
+      // Actually let's just use the existing pattern from getPendingRedeemedRewardsByChildren
+      // but filtered for approved and current child.
+
+      const { redeemedRewards: rr, users, rewards: rw } = await import("../drizzle/schema.js");
+      const { eq, and, gt } = await import("drizzle-orm");
+
+      return dbInstance
+        .select({
+          id: rr.id,
+          rewardId: rr.rewardId,
+          rewardTitle: rw.title,
+          rewardIcon: rw.icon,
+          processedAt: rr.processedAt,
+        })
+        .from(rr)
+        .innerJoin(rw, eq(rr.rewardId, rw.id))
+        .where(
+          and(
+            eq(rr.childId, ctx.user.id),
+            eq(rr.status, "approved"),
+            gt(rr.processedAt, yesterday)
+          )
+        );
     }),
   })
 });
