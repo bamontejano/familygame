@@ -22,8 +22,9 @@ export function createTRPCClient() {
   const baseUrl = getApiBaseUrl();
   // Si no hay baseUrl (entorno nativo sin configurar), tRPC fallará con "Invalid URL"
   // Aseguramos que al menos devuelva una ruta válida o la URL actual
-  const url = baseUrl ? `${baseUrl}/api/trpc` : "/api/trpc";
-  
+  const cleanBaseUrl = baseUrl ? baseUrl.replace(/\/$/, "") : "";
+  const url = cleanBaseUrl ? `${cleanBaseUrl}/api/trpc` : "/api/trpc";
+
   console.log("[tRPC] Client URL:", url);
 
   return trpc.createClient({

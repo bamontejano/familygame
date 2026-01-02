@@ -38,13 +38,13 @@ export function getApiBaseUrl(): string {
   // 2. Entorno Web: Derivar del hostname actual
   if (ReactNative.Platform.OS === "web" && typeof window !== "undefined" && window.location) {
     const { protocol, hostname, port } = window.location;
-    
+
     // Si estamos en el bundler de Metro (8081), apuntamos al servidor (3000)
     if (port === "8081" || hostname.startsWith("8081-")) {
       const apiHostname = hostname.replace(/^8081-/, "3000-");
       return `${protocol}//${apiHostname}${port === "8081" ? ":3000" : ""}`;
     }
-    
+
     // Si ya estamos en el puerto 3000 o en una URL de producción, usamos la actual
     return `${protocol}//${hostname}${port ? `:${port}` : ""}`;
   }
@@ -52,7 +52,7 @@ export function getApiBaseUrl(): string {
   // 3. Entorno Nativo (Android/iOS): 
   // Esta es la URL definitiva de tu servidor en Vercel.
   // Reemplázala por la URL que te asigne Vercel al desplegar (ej: https://family-game.vercel.app)
-  return "https://familygame.vercel.app/"; 
+  return "https://familygame.vercel.app";
 }
 
 export const SESSION_TOKEN_KEY = "app_session_token";

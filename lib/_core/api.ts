@@ -72,9 +72,14 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
         const errorJson = JSON.parse(errorText);
         errorMessage = errorJson.error || errorJson.message || errorText;
       } catch {
-        // Not JSON, use text as is
+        // Not JSON, check for common non-JSON errors
+        if (errorText.includes("<!DOCTYPE html>") || errorText.startsWith("<html>")) {
+          errorMessage = `Server Error (${response.status}): The server returned an HTML page instead of JSON. This might mean the server is down or misconfigured.`;
+        } else {
+          errorMessage = errorText || `API call failed with status ${response.status}`;
+        }
       }
-      throw new Error(errorMessage || `API call failed: ${response.statusText}`);
+      throw new Error(errorMessage);
     }
 
     const contentType = response.headers.get("content-type");

@@ -45,6 +45,15 @@ app.use(
   }),
 );
 
+// Global error handler for JSON responses
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("[Server Error]", err);
+  res.status(err.status || 500).json({
+    error: err.message || "Internal Server Error",
+    code: err.code,
+  });
+});
+
 // For local development
 if (process.env.NODE_ENV !== "production") {
   const port = parseInt(process.env.PORT || "3000");
